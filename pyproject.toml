@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "agent-mcp-robotics"
+version = "0.1.0"
+description = "An MCP server with robot-fleet and ROS 2 docs tools, and a tool-using agent evaluated on permissions, failure recovery and prompt injection."
+readme = "README.md"
+license = { text = "MIT" }
+authors = [{ name = "Muhammad Haroon Khan" }]
+requires-python = ">=3.10,<3.13"
+dependencies = [
+    "mcp>=2.3,<3",
+    "jsonschema>=4.20",
+    "pyyaml>=6",
+    "rank-bm25>=0.2.2",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "ruff>=0.6"]
+
+[project.scripts]
+robomcp-download = "robomcp.download:main"
+robomcp-build-index = "robomcp.docs:main"
+robomcp-server = "robomcp.server:main"
+robomcp-check = "robomcp.check:main"
+robomcp-docs-eval = "robomcp.docs_eval:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+extend-exclude = ["data", "artifacts"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM"]

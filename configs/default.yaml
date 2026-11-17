@@ -1,0 +1,18 @@
+# Defaults for every robomcp CLI. Paths are relative to the working directory.
+data_dir: data
+index_path: artifacts/docs_sections.jsonl   # one JSON line per documentation section
+policy_path: configs/policy.yaml
+
+corpus:
+  ros2_commit: 0ea463a2b27865c93acc928eccd2276e47c9f71c   # ros2/ros2_documentation, jazzy
+  exclude_globs:                # machine-generated changelogs
+    - "Releases/*Complete-Changelog*"
+    - "_internal/*"
+
+eval:                           # the question set written for robotics-docs-rag
+  source_repo: haroonkhan02/robotics-docs-rag
+  source_commit: 99393783595570318515d2da43fd911b6bfa9ac1
+
+world:
+  seed: 7
+  n_robots: 3

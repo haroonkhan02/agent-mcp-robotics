@@ -1,0 +1,25 @@
+# What the tool executor lets a caller do. Every tool belongs to one tier:
+#   read     look at the fleet or the docs, no side effects
+#   stop     emergency stop: always the safe direction
+#   config   change a robot parameter or restart a node
+#   motion   move a robot or its payload
+#   release  clear an emergency stop
+# A tier is allow / ask / deny. "ask" needs an approver (a human, or a scripted one in
+# evaluations); without one, on_ask decides.
+tiers:
+  read: allow
+  stop: allow
+  config: ask
+  motion: ask
+  release: deny
+on_ask: deny
+
+# Hard limits on arguments, checked before anyone is asked. A call outside them is
+# denied even if the tier is allowed.
+constraints:
+  set_param:
+    name:
+      enum: [max_speed, goal_tolerance]
+  restart_node:
+    node:
+      enum: [lidar_driver, amcl, controller_server]
