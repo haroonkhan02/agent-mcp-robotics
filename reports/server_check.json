@@ -1,0 +1,357 @@
+{
+ "seed": 7,
+ "startup_ms": 299.6,
+ "protocol": "2026-07-28",
+ "tools": [
+  {
+   "name": "list_robots",
+   "tier": "read",
+   "read_only": true
+  },
+  {
+   "name": "get_robot_state",
+   "tier": "read",
+   "read_only": true
+  },
+  {
+   "name": "list_locations",
+   "tier": "read",
+   "read_only": true
+  },
+  {
+   "name": "get_params",
+   "tier": "read",
+   "read_only": true
+  },
+  {
+   "name": "read_diagnostics",
+   "tier": "read",
+   "read_only": true
+  },
+  {
+   "name": "plan_route",
+   "tier": "read",
+   "read_only": true
+  },
+  {
+   "name": "emergency_stop",
+   "tier": "stop",
+   "read_only": false
+  },
+  {
+   "name": "set_param",
+   "tier": "config",
+   "read_only": false
+  },
+  {
+   "name": "restart_node",
+   "tier": "config",
+   "read_only": false
+  },
+  {
+   "name": "navigate_to",
+   "tier": "motion",
+   "read_only": false
+  },
+  {
+   "name": "dock",
+   "tier": "motion",
+   "read_only": false
+  },
+  {
+   "name": "pick_item",
+   "tier": "motion",
+   "read_only": false
+  },
+  {
+   "name": "drop_item",
+   "tier": "motion",
+   "read_only": false
+  },
+  {
+   "name": "clear_emergency_stop",
+   "tier": "release",
+   "read_only": false
+  },
+  {
+   "name": "search_docs",
+   "tier": "read",
+   "read_only": true
+  },
+  {
+   "name": "read_doc_section",
+   "tier": "read",
+   "read_only": true
+  }
+ ],
+ "deny": [
+  {
+   "tool": "list_robots",
+   "args": {},
+   "expect": "ok",
+   "got": "ok",
+   "pass": true,
+   "why": "read tier",
+   "ms": 0.66
+  },
+  {
+   "tool": "get_robot_state",
+   "args": {
+    "robot_id": "amr_1"
+   },
+   "expect": "ok",
+   "got": "ok",
+   "pass": true,
+   "why": "read tier",
+   "ms": 0.58
+  },
+  {
+   "tool": "read_diagnostics",
+   "args": {
+    "robot_id": "amr_1",
+    "limit": 5
+   },
+   "expect": "ok",
+   "got": "ok",
+   "pass": true,
+   "why": "read tier",
+   "ms": 0.59
+  },
+  {
+   "tool": "plan_route",
+   "args": {
+    "robot_id": "amr_1",
+    "goal": "packing_1"
+   },
+   "expect": "ok",
+   "got": "ok",
+   "pass": true,
+   "why": "planning moves nothing",
+   "ms": 0.82
+  },
+  {
+   "tool": "plan_route",
+   "args": {
+    "robot_id": "amr_1",
+    "goal": "maintenance_bay"
+   },
+   "expect": "GOAL_IN_KEEP_OUT",
+   "got": "GOAL_IN_KEEP_OUT",
+   "pass": true,
+   "why": "the world refuses, whatever the policy says",
+   "ms": 0.53
+  },
+  {
+   "tool": "emergency_stop",
+   "args": {
+    "robot_id": "amr_3"
+   },
+   "expect": "ok",
+   "got": "ok",
+   "pass": true,
+   "why": "stopping is always allowed",
+   "ms": 0.55
+  },
+  {
+   "tool": "clear_emergency_stop",
+   "args": {
+    "robot_id": "amr_3"
+   },
+   "expect": "PERMISSION_DENIED",
+   "got": "PERMISSION_DENIED",
+   "pass": true,
+   "why": "release tier is denied",
+   "ms": 0.52
+  },
+  {
+   "tool": "navigate_to",
+   "args": {
+    "robot_id": "amr_1",
+    "goal": "shelf_B"
+   },
+   "expect": "APPROVAL_REQUIRED",
+   "got": "APPROVAL_REQUIRED",
+   "pass": true,
+   "why": "motion needs approval, no operator attached",
+   "ms": 0.51
+  },
+  {
+   "tool": "set_param",
+   "args": {
+    "robot_id": "amr_1",
+    "name": "max_speed",
+    "value": 0.5
+   },
+   "expect": "APPROVAL_REQUIRED",
+   "got": "APPROVAL_REQUIRED",
+   "pass": true,
+   "why": "config needs approval",
+   "ms": 0.53
+  },
+  {
+   "tool": "set_param",
+   "args": {
+    "robot_id": "amr_1",
+    "name": "inflation_radius",
+    "value": 0.3
+   },
+   "expect": "PERMISSION_DENIED",
+   "got": "PERMISSION_DENIED",
+   "pass": true,
+   "why": "parameter outside the policy's allow-list",
+   "ms": 0.51
+  },
+  {
+   "tool": "navigate_to",
+   "args": {
+    "robot_id": "amr_1"
+   },
+   "expect": "INVALID_ARGUMENTS",
+   "got": "INVALID_ARGUMENTS",
+   "pass": true,
+   "why": "missing argument",
+   "ms": 0.53
+  },
+  {
+   "tool": "navigate_to",
+   "args": {
+    "robot_id": "amr_1",
+    "goal": "shelf_B",
+    "speed": 3
+   },
+   "expect": "INVALID_ARGUMENTS",
+   "got": "INVALID_ARGUMENTS",
+   "pass": true,
+   "why": "unknown argument",
+   "ms": 0.51
+  },
+  {
+   "tool": "fly_to",
+   "args": {
+    "robot_id": "amr_1"
+   },
+   "expect": "UNKNOWN_TOOL",
+   "got": "UNKNOWN_TOOL",
+   "pass": true,
+   "why": "tool does not exist",
+   "ms": 0.49
+  }
+ ],
+ "docs": {
+  "n": 61,
+  "page": {
+   "hit@1": 0.5737704918032787,
+   "hit@3": 0.7049180327868853,
+   "hit@5": 0.7540983606557377,
+   "hit@10": 0.819672131147541
+  },
+  "matches_in_process": true
+ },
+ "latency_ms": {
+  "list_robots": {
+   "n": 100,
+   "p50": 0.5,
+   "p95": 0.56
+  },
+  "plan_route": {
+   "n": 100,
+   "p50": 1.33,
+   "p95": 1.37
+  },
+  "search_docs": {
+   "n": 61,
+   "p50": 2.98,
+   "p95": 3.59
+  }
+ },
+ "allow": [
+  {
+   "tool": "pick_item",
+   "args": {
+    "robot_id": "amr_1",
+    "item": "battery_pack"
+   },
+   "expect": "ok",
+   "got": "ok",
+   "pass": true,
+   "why": "load",
+   "ms": 0.66
+  },
+  {
+   "tool": "navigate_to",
+   "args": {
+    "robot_id": "amr_1",
+    "goal": "packing_1"
+   },
+   "expect": "ok",
+   "got": "ok",
+   "pass": true,
+   "why": "through the doorway",
+   "ms": 0.97
+  },
+  {
+   "tool": "drop_item",
+   "args": {
+    "robot_id": "amr_1"
+   },
+   "expect": "ok",
+   "got": "ok",
+   "pass": true,
+   "why": "unload",
+   "ms": 0.57
+  },
+  {
+   "tool": "drop_item",
+   "args": {
+    "robot_id": "amr_1"
+   },
+   "expect": "NO_PAYLOAD",
+   "got": "NO_PAYLOAD",
+   "pass": true,
+   "why": "nothing left to drop",
+   "ms": 0.65
+  },
+  {
+   "tool": "set_param",
+   "args": {
+    "robot_id": "amr_1",
+    "name": "inflation_radius",
+    "value": 0.7
+   },
+   "expect": "PERMISSION_DENIED",
+   "got": "PERMISSION_DENIED",
+   "pass": true,
+   "why": "hard limit holds even when approval is waived",
+   "ms": 0.59
+  },
+  {
+   "tool": "clear_emergency_stop",
+   "args": {
+    "robot_id": "amr_1"
+   },
+   "expect": "PERMISSION_DENIED",
+   "got": "PERMISSION_DENIED",
+   "pass": true,
+   "why": "denied tier holds even when approval is waived",
+   "ms": 0.66
+  }
+ ],
+ "delivery": {
+  "robot": "amr_1",
+  "item": "battery_pack",
+  "delivered_at_packing_1": [
+   "battery_pack"
+  ],
+  "pass": true
+ },
+ "audit": {
+  "records": 9,
+  "calls_made": 9,
+  "decisions": [
+   "allowed",
+   "denied",
+   "unattended"
+  ]
+ },
+ "all_pass": true
+}
