@@ -1,0 +1,463 @@
+{
+ "n_questions": 61,
+ "n_sections": 2730,
+ "section": {
+  "hit@1": 0.4098360655737705,
+  "hit@3": 0.6065573770491803,
+  "hit@5": 0.6721311475409836,
+  "hit@10": 0.7868852459016393
+ },
+ "page": {
+  "hit@1": 0.5737704918032787,
+  "hit@3": 0.7049180327868853,
+  "hit@5": 0.7540983606557377,
+  "hit@10": 0.819672131147541
+ },
+ "mrr@10": 0.5259302628155087,
+ "found": 48,
+ "answer_on_first_page": 48,
+ "missed": [
+  "q15",
+  "q21",
+  "q25",
+  "q30",
+  "q34",
+  "q37",
+  "q38",
+  "q54",
+  "q57",
+  "q58",
+  "q59",
+  "q60",
+  "q61"
+ ],
+ "rows": [
+  {
+   "id": "q01",
+   "category": "concept",
+   "rank": 1,
+   "page_rank": 1,
+   "offset": 177
+  },
+  {
+   "id": "q02",
+   "category": "concept",
+   "rank": 1,
+   "page_rank": 1,
+   "offset": 551
+  },
+  {
+   "id": "q03",
+   "category": "concept",
+   "rank": 10,
+   "page_rank": 10,
+   "offset": 473
+  },
+  {
+   "id": "q04",
+   "category": "concept",
+   "rank": 1,
+   "page_rank": 1,
+   "offset": 379
+  },
+  {
+   "id": "q05",
+   "category": "concept",
+   "rank": 1,
+   "page_rank": 1,
+   "offset": 32
+  },
+  {
+   "id": "q06",
+   "category": "concept",
+   "rank": 5,
+   "page_rank": 2,
+   "offset": 132
+  },
+  {
+   "id": "q07",
+   "category": "concept",
+   "rank": 10,
+   "page_rank": 10,
+   "offset": 12
+  },
+  {
+   "id": "q08",
+   "category": "concept",
+   "rank": 2,
+   "page_rank": 2,
+   "offset": 148
+  },
+  {
+   "id": "q09",
+   "category": "concept",
+   "rank": 4,
+   "page_rank": 1,
+   "offset": 1418
+  },
+  {
+   "id": "q10",
+   "category": "concept",
+   "rank": 2,
+   "page_rank": 2,
+   "offset": 57
+  },
+  {
+   "id": "q11",
+   "category": "concept",
+   "rank": 1,
+   "page_rank": 1,
+   "offset": 27
+  },
+  {
+   "id": "q12",
+   "category": "concept",
+   "rank": 3,
+   "page_rank": 3,
+   "offset": 164
+  },
+  {
+   "id": "q13",
+   "category": "concept",
+   "rank": 1,
+   "page_rank": 1,
+   "offset": 55
+  },
+  {
+   "id": "q14",
+   "category": "concept",
+   "rank": 2,
+   "page_rank": 2,
+   "offset": 457
+  },
+  {
+   "id": "q15",
+   "category": "concept",
+   "rank": null,
+   "page_rank": null,
+   "offset": null
+  },
+  {
+   "id": "q16",
+   "category": "concept",
+   "rank": 3,
+   "page_rank": 1,
+   "offset": 199
+  },
+  {
+   "id": "q17",
+   "category": "cli",
+   "rank": 9,
+   "page_rank": 1,
+   "offset": 63
+  },
+  {
+   "id": "q18",
+   "category": "cli",
+   "rank": 1,
+   "page_rank": 1,
+   "offset": 81
+  },
+  {
+   "id": "q19",
+   "category": "cli",
+   "rank": 1,
+   "page_rank": 1,
+   "offset": 78
+  },
+  {
+   "id": "q20",
+   "category": "cli",
+   "rank": 6,
+   "page_rank": 6,
+   "offset": 107
+  },
+  {
+   "id": "q21",
+   "category": "cli",
+   "rank": null,
+   "page_rank": null,
+   "offset": null
+  },
+  {
+   "id": "q22",
+   "category": "cli",
+   "rank": 6,
+   "page_rank": 4,
+   "offset": 124
+  },
+  {
+   "id": "q23",
+   "category": "cli",
+   "rank": 5,
+   "page_rank": 5,
+   "offset": 55
+  },
+  {
+   "id": "q24",
+   "category": "cli",
+   "rank": 2,
+   "page_rank": 1,
+   "offset": 661
+  },
+  {
+   "id": "q25",
+   "category": "cli",
+   "rank": null,
+   "page_rank": null,
+   "offset": null
+  },
+  {
+   "id": "q26",
+   "category": "cli",
+   "rank": 2,
+   "page_rank": 2,
+   "offset": 674
+  },
+  {
+   "id": "q27",
+   "category": "cli",
+   "rank": 5,
+   "page_rank": 5,
+   "offset": 175
+  },
+  {
+   "id": "q28",
+   "category": "cli",
+   "rank": 1,
+   "page_rank": 1,
+   "offset": 638
+  },
+  {
+   "id": "q29",
+   "category": "cli",
+   "rank": 1,
+   "page_rank": 1,
+   "offset": 434
+  },
+  {
+   "id": "q30",
+   "category": "cli",
+   "rank": null,
+   "page_rank": 1,
+   "offset": null
+  },
+  {
+   "id": "q31",
+   "category": "cli",
+   "rank": 1,
+   "page_rank": 1,
+   "offset": 130
+  },
+  {
+   "id": "q32",
+   "category": "howto",
+   "rank": 1,
+   "page_rank": 1,
+   "offset": 505
+  },
+  {
+   "id": "q33",
+   "category": "howto",
+   "rank": 3,
+   "page_rank": 1,
+   "offset": 519
+  },
+  {
+   "id": "q34",
+   "category": "howto",
+   "rank": null,
+   "page_rank": null,
+   "offset": null
+  },
+  {
+   "id": "q35",
+   "category": "howto",
+   "rank": 2,
+   "page_rank": 1,
+   "offset": 746
+  },
+  {
+   "id": "q36",
+   "category": "howto",
+   "rank": 1,
+   "page_rank": 1,
+   "offset": 97
+  },
+  {
+   "id": "q37",
+   "category": "howto",
+   "rank": null,
+   "page_rank": null,
+   "offset": null
+  },
+  {
+   "id": "q38",
+   "category": "howto",
+   "rank": null,
+   "page_rank": null,
+   "offset": null
+  },
+  {
+   "id": "q39",
+   "category": "howto",
+   "rank": 3,
+   "page_rank": 3,
+   "offset": 65
+  },
+  {
+   "id": "q40",
+   "category": "howto",
+   "rank": 1,
+   "page_rank": 1,
+   "offset": 1243
+  },
+  {
+   "id": "q41",
+   "category": "howto",
+   "rank": 2,
+   "page_rank": 1,
+   "offset": 266
+  },
+  {
+   "id": "q42",
+   "category": "howto",
+   "rank": 2,
+   "page_rank": 2,
+   "offset": 115
+  },
+  {
+   "id": "q43",
+   "category": "howto",
+   "rank": 1,
+   "page_rank": 1,
+   "offset": 349
+  },
+  {
+   "id": "q44",
+   "category": "howto",
+   "rank": 1,
+   "page_rank": 1,
+   "offset": 167
+  },
+  {
+   "id": "q45",
+   "category": "howto",
+   "rank": 9,
+   "page_rank": 1,
+   "offset": 165
+  },
+  {
+   "id": "q46",
+   "category": "howto",
+   "rank": 1,
+   "page_rank": 1,
+   "offset": 848
+  },
+  {
+   "id": "q47",
+   "category": "howto",
+   "rank": 1,
+   "page_rank": 1,
+   "offset": 196
+  },
+  {
+   "id": "q48",
+   "category": "howto",
+   "rank": 1,
+   "page_rank": 1,
+   "offset": 21
+  },
+  {
+   "id": "q49",
+   "category": "howto",
+   "rank": 1,
+   "page_rank": 1,
+   "offset": 19
+  },
+  {
+   "id": "q50",
+   "category": "howto",
+   "rank": 1,
+   "page_rank": 1,
+   "offset": 198
+  },
+  {
+   "id": "q51",
+   "category": "howto",
+   "rank": 1,
+   "page_rank": 1,
+   "offset": 489
+  },
+  {
+   "id": "q52",
+   "category": "howto",
+   "rank": 1,
+   "page_rank": 1,
+   "offset": 273
+  },
+  {
+   "id": "q53",
+   "category": "howto",
+   "rank": 7,
+   "page_rank": 1,
+   "offset": 0
+  },
+  {
+   "id": "q54",
+   "category": "project",
+   "rank": null,
+   "page_rank": 8,
+   "offset": null
+  },
+  {
+   "id": "q55",
+   "category": "project",
+   "rank": 1,
+   "page_rank": 1,
+   "offset": 6
+  },
+  {
+   "id": "q56",
+   "category": "project",
+   "rank": 1,
+   "page_rank": 1,
+   "offset": 81
+  },
+  {
+   "id": "q57",
+   "category": "paper",
+   "rank": null,
+   "page_rank": null,
+   "offset": null
+  },
+  {
+   "id": "q58",
+   "category": "paper",
+   "rank": null,
+   "page_rank": null,
+   "offset": null
+  },
+  {
+   "id": "q59",
+   "category": "paper",
+   "rank": null,
+   "page_rank": null,
+   "offset": null
+  },
+  {
+   "id": "q60",
+   "category": "paper",
+   "rank": null,
+   "page_rank": null,
+   "offset": null
+  },
+  {
+   "id": "q61",
+   "category": "paper",
+   "rank": null,
+   "page_rank": null,
+   "offset": null
+  }
+ ]
+}
