@@ -14,6 +14,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
+import os
 import sys
 from pathlib import Path
 from typing import Any
@@ -108,7 +109,12 @@ def main(argv: list[str] | None = None) -> None:
     ap.add_argument("--on-ask", choices=["allow", "deny"], default=None,
                     help="what happens to calls that need approval; no operator is attached "
                          "to a stdio server (default: from the policy file)")
+    ap.add_argument("--project-dir", default=None,
+                    help="change to this directory first; MCP clients start servers from "
+                         "their own working directory, and the config paths are relative")
     args = ap.parse_args(argv)
+    if args.project_dir:
+        os.chdir(args.project_dir)
     executor = build_executor(load_settings(args.config), args.seed,
                               Path(args.audit) if args.audit else None, args.on_ask)
     print(f"robomcp {__version__}: {len(executor.tools)} tools, "

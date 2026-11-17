@@ -85,7 +85,9 @@ def test_real_server_process_over_stdio(tmp_path):
     audit = tmp_path / "audit.jsonl"
     params = StdioServerParameters(
         command=sys.executable,
-        args=["-m", "robomcp.server", "--config", str(config), "--audit", str(audit)],
+        args=["-m", "robomcp.server", "--project-dir", str(tmp_path), "--config", "config.yaml",
+              "--audit", "audit.jsonl"],
+        cwd=str(ROOT / "tests"),  # a client's own directory, not the project's
         env={"PYTHONPATH": str(ROOT / "src")},
     )
 
