@@ -28,6 +28,7 @@ robomcp-build-index = "robomcp.docs:main"
 robomcp-server = "robomcp.server:main"
 robomcp-check = "robomcp.check:main"
 robomcp-docs-eval = "robomcp.docs_eval:main"
+robomcp-agent-eval = "robomcp.agent_eval:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
