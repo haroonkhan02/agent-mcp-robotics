@@ -13,10 +13,10 @@ a permission policy between the model and anything that moves. The goal is to me
 reliably an agent completes fleet tasks through these tools: when it needs approval, when a
 tool fails, and when text it reads tries to hijack it.
 
-**Status: work in progress.** The server, the 16 tools, the permission policy, the simulated
-fleet and the documentation search are done and tested. The agent itself is next (Claude and
-a local model behind the same loop, a task suite with checkable end states, injected tool
-failures), followed by a prompt-injection test set and the evaluation over seeded runs.
+**Status: work in progress.** The server, the permission policy, the agent loop (Claude or a
+local model behind the same MCP client) and a 14-task suite with injected tool failures are
+done, with first results on two local models below. Next: a prompt-injection test set (doc
+sections and diagnostics as carriers), defences, error analysis and a Claude run.
 
 ## Design
 
@@ -49,31 +49,37 @@ between the two halves. Driving costs battery and simulated time, faults block m
 until the right node is restarted, and a safety margin set too wide closes the doorway.
 The same seed always gives the same world, so the end state of a run can be checked exactly.
 
-## Results so far
+## Agent results so far
 
-`robomcp-check` starts the server as a subprocess and talks to it over stdio like any MCP
-client. All 19 scripted calls return the expected outcome: reads succeed, motion without an
-operator returns `APPROVAL_REQUIRED`, a parameter outside the allow-list and releasing an
-emergency stop return `PERMISSION_DENIED` even with approval waived, and malformed calls are
-rejected before the policy sees them. With approval waived, a delivery (pick, drive through
-the doorway, drop) ends with the item at the packing station and nine audit records for
-nine calls. Full table: [reports/server_check.md](reports/server_check.md).
+The agent gets one instruction, the MCP tool list and a short system prompt, and works until
+it answers. Each task starts from a seeded world (three seeds per task) and is scored on the
+end state: where the robots are, what was delivered, which events happened, and for
+read-only and refusal tasks what the answer says. A scripted operator approves every call
+that needs approval, except in the task where it refuses. Local models, greedy decoding:
 
-Documentation search, on the 61 answerable questions written for
-[robotics-docs-rag](https://github.com/haroonkhan02/robotics-docs-rag), over 2,730 sections:
+| Tasks (runs) | Qwen2.5-7B | Qwen2.5-7B + autonomy rule | Llama-3.2-3B |
+|---|---|---|---|
+| All (42) | 19 (45 %) | 24 (57 %) | 12 (29 %) |
+| Nominal: status, delivery, parameter, route, (12) | 7 | 6 | 3 |
+| Recovery: low battery, fault, timeout, busy dock, no path (18) | 0 | 6 | 3 |
+| Safety: e-stopped robot, keep-out goal, operator refuses (9) | 9 | 9 | 6 |
+| Docs question (3) | 3 | 3 | 0 |
+| Calls the policy denied | 3 | 0 | 21 |
 
-| Counted as a hit | Hit@1 | Hit@5 | Hit@10 | MRR@10 |
-|---|---|---|---|---|
-| Section from a gold page containing an answer phrase | 0.410 | 0.672 | 0.787 | 0.526 |
-| Any section from a gold page | 0.574 | 0.754 | 0.820 | |
+The safety tasks hold because the server enforces them: no model released an emergency stop
+or entered the keep-out area, however often it tried (Llama tried 21 times). Recovery is
+where the models fall down. Qwen reads every error correctly ("needs 15 % and has 16 %",
+"fault LOCALIZATION_LOST") and then stops to describe the fix instead of doing it. One added
+prompt line ("nobody will answer questions; fix the cause yourself") turns that into 6/18,
+with restart-the-node recovery going from 0/6 to 6/6, but it also makes the model act more
+loosely: after a timeout it sent a different robot than the one named (3 of 3 runs), and in
+the delivery task it drove to the station without picking up the item. With 42 runs per column the intervals are wide (overall 95 % CI about
+±15 points), so only the large gaps mean much. Per-task tables and every failed run with its
+tool calls: [reports/agent_tasks.md](reports/agent_tasks.md).
 
-This is plain BM25, chosen so the server needs no embedding model. For 13 of the 61
-questions no relevant section is in the top 10, so an agent will have to rephrase and search
-again; whether it does is part of what the evaluation will measure. The same questions sent
-through the `search_docs` tool over MCP give identical scores. A round trip takes about
-0.5 ms for a fleet read and 3 ms for a search (median, Apple M5), which says the protocol
-adds little; it says nothing about a real robot. Details:
-[reports/docs_search.md](reports/docs_search.md).
+The server itself was checked separately over stdio ([server_check](reports/server_check.md):
+19/19 scripted calls give the expected outcome) and the documentation search scores Hit@5
+0.672 / MRR@10 0.526 on 61 questions with plain BM25 ([docs_search](reports/docs_search.md)).
 
 ## Repository structure
 
@@ -90,8 +96,13 @@ agent-mcp-robotics/
 │   ├── permissions.py        policy loading and decisions
 │   ├── executor.py           validate -> permit -> run -> audit
 │   ├── server.py             MCP server over stdio
-│   ├── check.py, docs_eval.py   the two reports
-├── reports/                  server_check, docs_search (.md and .json)
+│   ├── check.py, docs_eval.py   server and search reports
+│   ├── models.py             Claude, MLX and scripted backends, tool-call parsing
+│   ├── agent.py              the tool loop, with turn and repeat-failure limits
+│   ├── tasks.py              task setup, fault injection, scripted operator, checks
+│   ├── agent_eval.py, agent_report.py   seeded runs over MCP and their summary
+├── tasks/tasks.yaml          14 tasks: nominal, recovery, safety, docs
+├── reports/                  agent_tasks, agent_runs/*.jsonl, server_check, docs_search
 └── tests/                    fixed world, tiny synthetic docs; no network, no models
 ```
 
@@ -105,6 +116,15 @@ robomcp-build-index       # artifacts/docs_sections.jsonl
 robomcp-docs-eval         # reports/docs_search.md
 robomcp-check             # reports/server_check.md
 pytest -q
+```
+
+Agent runs use a local model on Apple silicon or Claude (requires an Anthropic API key):
+
+```bash
+uv pip install -e ".[mlx]"        # or ".[anthropic]"
+robomcp-agent-eval --model mlx:mlx-community/Qwen2.5-7B-Instruct-4bit --name qwen2.5-7b
+robomcp-agent-eval --model anthropic:claude-opus-5-5:medium --name opus
+robomcp-agent-report qwen2.5-7b opus      # reports/agent_tasks.md
 ```
 
 To use the server from an MCP client, register it as a stdio server:
@@ -135,6 +155,10 @@ still hold.
   widen what is permitted.
 - Refusals and failures are ordinary tool results with `is_error` set, not protocol errors,
   so a model can read them and try something else.
+- The agent loop is model-agnostic and talks to the server only through an MCP client, so a
+  local model and Claude are measured through exactly the same tools and policy.
+- Recovery is left to the model: errors come back as tool results and the loop only adds a
+  turn budget and a stop after the same call fails the same way three times.
 - Search returns short snippets and section ids; full text is read one page at a time. That
   keeps untrusted text out of the context unless the agent asks for it.
 
