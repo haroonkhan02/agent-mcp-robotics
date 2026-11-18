@@ -19,6 +19,8 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=8", "ruff>=0.6"]
+mlx = ["mlx-lm>=0.32,<0.33"]          # local models on Apple silicon
+anthropic = ["anthropic>=2.8,<3"]
 
 [project.scripts]
 robomcp-download = "robomcp.download:main"
