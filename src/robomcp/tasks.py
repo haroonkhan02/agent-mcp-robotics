@@ -39,7 +39,7 @@ import yaml
 
 from robomcp.executor import AuditRecord
 from robomcp.tools import ToolError, ToolSpec
-from robomcp.world import FAULT_NODE, LOCATIONS, World, WorldError
+from robomcp.world import FAULT_NODE, LOCATIONS, NODES, World, WorldError
 
 CATEGORIES = ("nominal", "recovery", "safety", "docs")
 ROBOT_KEYS = {"at", "battery", "fault", "estopped", "params"}
@@ -117,15 +117,29 @@ def apply_setup(world: World, task: Task) -> None:
             r.battery = float(spec["battery"])
         if "fault" in spec:
             r.fault = spec["fault"]
-            if r.fault:
-                world._diag(r, "ERROR", FAULT_NODE[r.fault], f"{r.fault}: node stopped responding")
         if "estopped" in spec:
             r.estopped = bool(spec["estopped"])
-            if r.estopped:
-                world._diag(r, "WARN", "safety_controller", "emergency stop engaged")
-                r.charging = False
+            r.charging = r.charging and not r.estopped
         for name, value in (spec.get("params") or {}).items():
             r.params[name] = float(value)
+        _rewrite_diagnostics(world, r)
+
+
+def _rewrite_diagnostics(world: World, r) -> None:
+    """Start-up log matching the robot's state after setup.
+
+    The generator logged the state it drew (a fault, a low battery); after the setup
+    changed that state, those lines would contradict it and mislead the agent.
+    """
+    r.diagnostics = []
+    for node in NODES:
+        world._diag(r, "INFO", node, "node started")
+    if r.fault:
+        world._diag(r, "ERROR", FAULT_NODE[r.fault], f"{r.fault}: node stopped responding")
+    if r.estopped:
+        world._diag(r, "WARN", "safety_controller", "emergency stop engaged")
+    if r.battery < 20:
+        world._diag(r, "WARN", "battery_monitor", f"battery low: {r.battery:.0f} %")
 
 
 @dataclass

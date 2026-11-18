@@ -61,8 +61,18 @@ def test_setup_overrides_only_the_named_robot():
     r = w.robots["amr_1"]
     assert (r.at, r.battery, r.fault, r.estopped) == ("dock_2", 15.0, "LIDAR_TIMEOUT", True)
     assert r.params["inflation_radius"] == 0.7 and not r.charging
-    assert r.diagnostics[-1]["node"] == "safety_controller"
+    assert [d["node"] for d in r.diagnostics[-3:]] == ["lidar_driver", "safety_controller",
+                                                     "battery_monitor"]
     assert w.robots["amr_2"].state() == before
+
+
+def test_setup_rewrites_diagnostics_that_no_longer_hold():
+    w = World.generate(0)  # amr_1 is drawn with a CONTROLLER_STALLED fault
+    assert any("CONTROLLER_STALLED" in d["message"] for d in w.robots["amr_1"].diagnostics)
+    apply_setup(w, task(setup={"robots": {"amr_1": {"fault": None, "battery": 12}}}))
+    msgs = [d["message"] for d in w.robots["amr_1"].diagnostics]
+    assert not any("CONTROLLER_STALLED" in m for m in msgs)
+    assert msgs[-1] == "battery low: 12 %"
 
 
 def test_injected_timeout_fires_once_and_only_for_its_robot(world):
