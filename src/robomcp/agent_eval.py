@@ -23,7 +23,7 @@ from typing import Any
 
 from mcp import Client
 
-from robomcp.agent import Agent
+from robomcp.agent import PROMPTS, Agent
 from robomcp.config import load_settings
 from robomcp.docs import DocsIndex
 from robomcp.executor import AuditLog, ToolExecutor
@@ -39,7 +39,8 @@ RUNS_DIR = Path("reports/agent_runs")
 
 
 async def run_task(task: Task, seed: int, model: ChatModel, policy: Policy,
-                   docs: DocsIndex | None, n_robots: int = 3, max_turns: int = 16) -> dict:
+                   docs: DocsIndex | None, n_robots: int = 3, max_turns: int = 16,
+                   prompt: str = "default") -> dict:
     world = World.generate(seed, n_robots)
     apply_setup(world, task)
     tools = build_tools(world, docs)
@@ -47,7 +48,7 @@ async def run_task(task: Task, seed: int, model: ChatModel, policy: Policy,
     operator = ScriptedOperator(task)
     audit = AuditLog()
     executor = ToolExecutor(tools, policy, approver=operator, audit=audit)
-    agent = Agent(model, max_turns=max_turns)
+    agent = Agent(model, system=PROMPTS[prompt], max_turns=max_turns)
     start = time.perf_counter()
     async with Client(build_server(executor)) as client:
         run = await agent.run(client, task.instruction)
@@ -56,6 +57,7 @@ async def run_task(task: Task, seed: int, model: ChatModel, policy: Policy,
     errors = dict(run.errors)
     return {
         "task": task.id, "category": task.category, "seed": seed, "model": model.name,
+        "prompt": prompt,
         "success": outcome.success, "failed": outcome.failed, "stop": run.stop,
         "turns": run.turns, "tool_calls": len(run.steps), "errors": errors,
         "hit_error": bool(errors), "parse_errors": run.parse_errors,
@@ -85,7 +87,8 @@ def done_keys(path: Path) -> set[tuple[str, int]]:
 
 
 async def run_suite(tasks: list[Task], seeds: list[int], model: ChatModel, policy: Policy,
-                    docs: DocsIndex | None, out: Path, n_robots: int, max_turns: int) -> int:
+                    docs: DocsIndex | None, out: Path, n_robots: int, max_turns: int,
+                    prompt: str = "default") -> int:
     out.parent.mkdir(parents=True, exist_ok=True)
     done = done_keys(out)
     n = 0
@@ -96,7 +99,7 @@ async def run_suite(tasks: list[Task], seeds: list[int], model: ChatModel, polic
         for seed in seeds:
             if (task.id, seed) in done:
                 continue
-            rec = await run_task(task, seed, model, policy, docs, n_robots, max_turns)
+            rec = await run_task(task, seed, model, policy, docs, n_robots, max_turns, prompt)
             with out.open("a", encoding="utf-8") as f:
                 f.write(json.dumps(rec, ensure_ascii=False, default=str) + "\n")
             n += 1
@@ -116,6 +119,8 @@ def main(argv: list[str] | None = None) -> None:
     ap.add_argument("--tasks", default=str(DEFAULT_TASKS))
     ap.add_argument("--only", nargs="*", default=None, help="task ids to run")
     ap.add_argument("--max-turns", type=int, default=16)
+    ap.add_argument("--prompt", choices=sorted(PROMPTS), default="default",
+                    help="system prompt variant (autonomous = default + one rule)")
     ap.add_argument("--config", default=None)
     args = ap.parse_args(argv)
 
@@ -131,7 +136,7 @@ def main(argv: list[str] | None = None) -> None:
     model = make_model(args.model)
     out = RUNS_DIR / f"{args.name}.jsonl"
     n = asyncio.run(run_suite(tasks, args.seeds, model, policy, docs, out,
-                              cfg.world.n_robots, args.max_turns))
+                              cfg.world.n_robots, args.max_turns, args.prompt))
     print(f"{n} new run(s) -> {out}", file=sys.stderr)
 
 

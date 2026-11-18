@@ -39,6 +39,15 @@ when the task allows it, or stop and report.
 - Call one tool at a time. When the task is done, or cannot be done, reply in plain text \
 with a short summary and no tool call."""
 
+# Variant for the ablation in reports/agent_tasks.md: the same prompt plus one rule. Local
+# models tend to diagnose an error correctly and then hand the next step back as a question.
+AUTONOMY_RULE = (
+    "\n- Nobody will answer questions during the task. Do not stop to ask for confirmation "
+    "or to suggest a next step: if you can fix the cause yourself with the tools, do it, "
+    "then finish the task."
+)
+PROMPTS = {"default": SYSTEM_PROMPT, "autonomous": SYSTEM_PROMPT + AUTONOMY_RULE}
+
 FORMAT_REMINDER = (
     "Your last message tried to call a tool but could not be read ({error}). Call tools "
     "using the exact format given in the instructions, one call at a time."

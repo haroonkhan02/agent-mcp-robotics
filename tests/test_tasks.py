@@ -159,3 +159,18 @@ def test_a_wrong_answer_fails(tmp_path):
     assert run(run_suite([TASKS["fleet_status"]], [0, 1], model, POLICY, None, out, 3, 4)) == 0
     # docs tasks are skipped without an index instead of failing
     assert run(run_suite([TASKS["docs_topic_list"]], [0], model, POLICY, None, out, 3, 4)) == 0
+
+
+def test_prompt_variant_is_recorded_and_used():
+    from robomcp.agent import AUTONOMY_RULE
+
+    seen = {}
+
+    class Spy(ScriptedModel):
+        def complete(self, system, messages, tools):
+            seen["system"] = system
+            return super().complete(system, messages, tools)
+
+    rec = run(run_task(TASKS["keep_out"], 0, Spy([ModelTurn(text="cannot")]), POLICY, None,
+                       prompt="autonomous"))
+    assert rec["prompt"] == "autonomous" and seen["system"].endswith(AUTONOMY_RULE)
