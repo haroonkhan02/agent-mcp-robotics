@@ -11,6 +11,7 @@ from robomcp.models import (
     ToolCall,
     common_prefix,
     make_model,
+    one_call_per_turn,
     parse_tool_calls,
     to_anthropic,
     to_hf,
@@ -200,3 +201,23 @@ def test_make_model_rejects_unknown_spec():
     with pytest.raises(ValueError):
         make_model("openai:gpt")
     assert common_prefix([1, 2, 3], [1, 2, 4]) == 2
+
+
+def test_one_call_per_turn_interleaves_results():
+    out = one_call_per_turn(CONVO)
+    assert [(m["role"], len(m.get("tool_calls") or [])) for m in out] == [
+        ("user", 0), ("assistant", 1), ("tool", 0), ("assistant", 1), ("tool", 0),
+        ("assistant", 0)]
+    assert out[2]["tool_call_id"] == "t1" and out[4]["tool_call_id"] == "t2"
+
+
+def test_mlx_falls_back_when_template_rejects_two_calls():
+    m, _ = make_fake_mlx("ok")
+
+    def strict(messages, **kw):
+        if any(len(x.get("tool_calls") or []) > 1 for x in messages):
+            raise ValueError("This model only supports single tool-calls at once!")
+        return "|".join(x["content"] for x in messages)
+
+    m.tokenizer.apply_chat_template = strict
+    assert m.render("S", CONVO, TOOLS).count("|") == 6

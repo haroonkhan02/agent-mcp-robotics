@@ -226,6 +226,35 @@ def to_hf(messages: list[dict]) -> list[dict]:
     return out
 
 
+def one_call_per_turn(messages: list[dict]) -> list[dict]:
+    """Rewrite turns with several tool calls as call, result, call, result.
+
+    Some chat templates (Llama 3.x) reject an assistant message with more than one call.
+    """
+    out: list[dict] = []
+    i = 0
+    while i < len(messages):
+        m = messages[i]
+        calls = m.get("tool_calls") or []
+        if m["role"] != "assistant" or len(calls) < 2:
+            out.append(m)
+            i += 1
+            continue
+        results = []
+        j = i + 1
+        while j < len(messages) and messages[j]["role"] == "tool":
+            results.append(messages[j])
+            j += 1
+        by_id = {r.get("tool_call_id"): r for r in results}
+        for k, c in enumerate(calls):
+            out.append({**m, "content": m.get("content", "") if k == 0 else "",
+                        "tool_calls": [c], "raw": None})
+            if c.id in by_id:
+                out.append(by_id[c.id])
+        i = j
+    return out
+
+
 def common_prefix(a: Sequence[int], b: Sequence[int]) -> int:
     n = min(len(a), len(b))
     for i in range(n):
@@ -263,9 +292,17 @@ class MLXModel:
         hf_tools = [{"type": "function", "function": {
             "name": t["name"], "description": t["description"],
             "parameters": t["input_schema"]}} for t in tools]
-        return self.tokenizer.apply_chat_template(
-            [{"role": "system", "content": system}, *to_hf(messages)], tools=hf_tools,
-            tokenize=False, add_generation_prompt=True, date_string=TEMPLATE_DATE)
+        def render(msgs: list[dict]) -> str:
+            return self.tokenizer.apply_chat_template(
+                [{"role": "system", "content": system}, *to_hf(msgs)], tools=hf_tools,
+                tokenize=False, add_generation_prompt=True, date_string=TEMPLATE_DATE)
+
+        try:
+            return render(messages)
+        except Exception as e:  # jinja2 TemplateError; jinja2 is not a direct dependency
+            if "single tool-call" not in str(e):
+                raise
+            return render(one_call_per_turn(messages))
 
     def _reuse(self, tokens: list[int]) -> int:
         """Trim the cache to the shared prefix; return how many prompt tokens it covers."""
