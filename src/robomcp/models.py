@@ -85,6 +85,8 @@ def parse_tool_calls(text: str, start: int = 0) -> tuple[str, list[ToolCall], st
     object {"name": ..., "parameters": ...}. Text that is neither is a final answer.
     """
     calls: list[ToolCall] = []
+    # Llama 3.x marks calls after the first turn with <|python_tag|> (and may end <|eom_id|>)
+    text = text.replace("<|python_tag|>", "").replace("<|eom_id|>", "")
     if "<tool_call>" in text:
         for body in _TAGGED.findall(text):
             try:

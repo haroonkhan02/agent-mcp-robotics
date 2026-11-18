@@ -41,6 +41,12 @@ def test_parse_llama_bare_json_with_parameters():
     assert [c.name for c in calls] == ["a", "b"]
 
 
+def test_parse_llama_python_tag():
+    text = '<|python_tag|>{"name": "restart_node", "parameters": {"robot_id": "amr_2"}}'
+    prose, calls, err = parse_tool_calls(text)
+    assert err is None and prose == "" and calls[0].name == "restart_node"
+
+
 def test_parse_plain_answer_and_broken_call():
     assert parse_tool_calls("amr_2 has a lidar fault.") == ("amr_2 has a lidar fault.", [], None)
     assert parse_tool_calls('{"robots": 3} is the count')[1] == []  # JSON-ish prose is text
