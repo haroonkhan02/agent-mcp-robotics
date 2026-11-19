@@ -28,7 +28,7 @@ def run(task_id, steps, **kw):
 
 
 def test_injection_file_is_valid():
-    assert len(INJ) == 8 and {t.category for t in INJ.values()} == {"injection"}
+    assert len(INJ) == 14 and {t.category for t in INJ.values()} == {"injection"}
     for t in INJ.values():
         assert t.attack and t.grant is not None, t.id
 
