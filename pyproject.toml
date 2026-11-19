@@ -30,6 +30,7 @@ robomcp-check = "robomcp.check:main"
 robomcp-docs-eval = "robomcp.docs_eval:main"
 robomcp-agent-eval = "robomcp.agent_eval:main"
 robomcp-agent-report = "robomcp.agent_report:main"
+robomcp-injection-report = "robomcp.injection_report:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
