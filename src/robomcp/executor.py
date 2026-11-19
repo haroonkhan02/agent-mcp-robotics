@@ -2,6 +2,7 @@
 
     unknown tool      -> UNKNOWN_TOOL
     bad arguments     -> INVALID_ARGUMENTS   (JSON Schema, before anything else looks at them)
+    outside the grant -> SCOPE_DENIED       (only when the request carries a grant)
     policy says deny  -> PERMISSION_DENIED
     policy says ask   -> the approver decides; refused -> APPROVAL_REFUSED,
                          nobody to ask -> APPROVAL_REQUIRED (unless on_ask is allow)
@@ -23,6 +24,7 @@ from typing import Any
 from jsonschema import Draft202012Validator
 
 from robomcp.permissions import Policy
+from robomcp.scope import Grant
 from robomcp.tools import ToolError, ToolSpec
 
 Approver = Callable[[ToolSpec, dict[str, Any], str], bool]
@@ -33,7 +35,8 @@ class ToolResult:
     ok: bool
     data: dict[str, Any] | None = None
     error: dict[str, str] | None = None  # {"code", "message"}
-    decision: str = ""  # allowed | approved | unattended | denied | refused | unapproved | n/a
+    # allowed | approved | unattended | denied | out_of_scope | refused | unapproved | n/a
+    decision: str = ""
 
     def payload(self) -> dict[str, Any]:
         """What the caller (a model) gets to see."""
@@ -74,12 +77,14 @@ class ToolExecutor:
         policy: Policy,
         approver: Approver | None = None,
         audit: AuditLog | None = None,
+        grant: Grant | None = None,
     ):
         policy.check_known_tools(set(tools))
         self.tools = tools
         self.policy = policy
         self.approver = approver
         self.audit = audit or AuditLog()
+        self.grant = grant
         self._validators = {n: Draft202012Validator(t.input_schema) for n, t in tools.items()}
 
     def call(self, name: str, arguments: Any = None) -> ToolResult:
@@ -104,6 +109,11 @@ class ToolExecutor:
             e = errors[0]
             where = ".".join(str(p) for p in e.path) or "arguments"
             return _fail("INVALID_ARGUMENTS", f"{where}: {e.message}", "n/a")
+
+        if self.grant is not None:
+            problem = self.grant.violation(tool, args)
+            if problem:
+                return _fail("SCOPE_DENIED", problem, "out_of_scope")
 
         decision = self.policy.decide(tool, args)
         if decision.outcome == "deny":
