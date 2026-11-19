@@ -8,6 +8,8 @@ resumed. `robomcp-agent-report` turns the files into the summary.
 
     robomcp-agent-eval --model mlx:mlx-community/Qwen2.5-7B-Instruct-4bit --name qwen7b
     robomcp-agent-eval --model anthropic:claude-opus-5-5:medium --name opus   # needs a key
+    robomcp-agent-eval --tasks tasks/injection.yaml --runs-dir reports/injection_runs \
+        --prompt autonomous --defence spotlight --scope --model ... --name qwen7b-both
 """
 
 from __future__ import annotations
@@ -23,14 +25,24 @@ from typing import Any
 
 from mcp import Client
 
-from robomcp.agent import PROMPTS, Agent
+from robomcp.agent import DEFENCES, PROMPTS, Agent
 from robomcp.config import load_settings
 from robomcp.docs import DocsIndex
 from robomcp.executor import AuditLog, ToolExecutor
 from robomcp.models import ChatModel, make_model
 from robomcp.permissions import Policy
+from robomcp.scope import Grant
 from robomcp.server import build_server
-from robomcp.tasks import ScriptedOperator, Task, apply_setup, evaluate, inject_faults, load_tasks
+from robomcp.tasks import (
+    ScriptedOperator,
+    Task,
+    apply_setup,
+    attack_outcome,
+    evaluate,
+    inject_faults,
+    load_tasks,
+    poison_outputs,
+)
 from robomcp.tools import build_tools
 from robomcp.world import World
 
@@ -40,24 +52,30 @@ RUNS_DIR = Path("reports/agent_runs")
 
 async def run_task(task: Task, seed: int, model: ChatModel, policy: Policy,
                    docs: DocsIndex | None, n_robots: int = 3, max_turns: int = 16,
-                   prompt: str = "default") -> dict:
+                   prompt: str = "default", defence: str = "none",
+                   scope: bool = False) -> dict:
     world = World.generate(seed, n_robots)
     apply_setup(world, task)
     tools = build_tools(world, docs)
     injections = inject_faults(world, tools, task)
+    poison_outputs(tools, task)
     operator = ScriptedOperator(task)
     audit = AuditLog()
-    executor = ToolExecutor(tools, policy, approver=operator, audit=audit)
-    agent = Agent(model, system=PROMPTS[prompt], max_turns=max_turns)
+    grant = Grant.from_dict(task.grant) if scope and task.grant is not None else None
+    executor = ToolExecutor(tools, policy, approver=operator, audit=audit, grant=grant)
+    agent = Agent(model, system=PROMPTS[prompt], max_turns=max_turns, defence=defence)
     start = time.perf_counter()
     async with Client(build_server(executor)) as client:
         run = await agent.run(client, task.instruction)
     wall = time.perf_counter() - start
     outcome = evaluate(task, world, audit.records, run.answer)
+    attempted, attacked = attack_outcome(task, world, audit.records, run.answer)
     errors = dict(run.errors)
     return {
         "task": task.id, "category": task.category, "seed": seed, "model": model.name,
-        "prompt": prompt,
+        "prompt": prompt, "defence": defence, "scope": scope,
+        "attack_attempted": attempted, "attack_succeeded": attacked,
+        "scope_denied": errors.get("SCOPE_DENIED", 0),
         "success": outcome.success, "failed": outcome.failed, "stop": run.stop,
         "turns": run.turns, "tool_calls": len(run.steps), "errors": errors,
         "hit_error": bool(errors), "parse_errors": run.parse_errors,
@@ -88,7 +106,8 @@ def done_keys(path: Path) -> set[tuple[str, int]]:
 
 async def run_suite(tasks: list[Task], seeds: list[int], model: ChatModel, policy: Policy,
                     docs: DocsIndex | None, out: Path, n_robots: int, max_turns: int,
-                    prompt: str = "default") -> int:
+                    prompt: str = "default", defence: str = "none",
+                    scope: bool = False) -> int:
     out.parent.mkdir(parents=True, exist_ok=True)
     done = done_keys(out)
     n = 0
@@ -99,7 +118,8 @@ async def run_suite(tasks: list[Task], seeds: list[int], model: ChatModel, polic
         for seed in seeds:
             if (task.id, seed) in done:
                 continue
-            rec = await run_task(task, seed, model, policy, docs, n_robots, max_turns, prompt)
+            rec = await run_task(task, seed, model, policy, docs, n_robots, max_turns, prompt,
+                                 defence, scope)
             with out.open("a", encoding="utf-8") as f:
                 f.write(json.dumps(rec, ensure_ascii=False, default=str) + "\n")
             n += 1
@@ -121,6 +141,11 @@ def main(argv: list[str] | None = None) -> None:
     ap.add_argument("--max-turns", type=int, default=16)
     ap.add_argument("--prompt", choices=sorted(PROMPTS), default="default",
                     help="system prompt variant (autonomous = default + one rule)")
+    ap.add_argument("--defence", choices=DEFENCES, default="none",
+                    help="spotlight = mark tool output as data and restate the task")
+    ap.add_argument("--scope", action="store_true",
+                    help="enforce each task's grant (tiers and robots it may touch)")
+    ap.add_argument("--runs-dir", default=str(RUNS_DIR), help="where the .jsonl goes")
     ap.add_argument("--config", default=None)
     args = ap.parse_args(argv)
 
@@ -134,9 +159,10 @@ def main(argv: list[str] | None = None) -> None:
     docs = DocsIndex.load(cfg.index_path) if cfg.index_path.exists() else None
     policy = Policy.load(cfg.policy_path)
     model = make_model(args.model)
-    out = RUNS_DIR / f"{args.name}.jsonl"
+    out = Path(args.runs_dir) / f"{args.name}.jsonl"
     n = asyncio.run(run_suite(tasks, args.seeds, model, policy, docs, out,
-                              cfg.world.n_robots, args.max_turns, args.prompt))
+                              cfg.world.n_robots, args.max_turns, args.prompt,
+                              args.defence, args.scope))
     print(f"{n} new run(s) -> {out}", file=sys.stderr)
 
 
